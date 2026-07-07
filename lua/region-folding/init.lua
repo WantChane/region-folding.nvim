@@ -10,7 +10,9 @@ local default_opt = {
 	-- Optional space between comment and region text
 	space_after_comment = true,
 	-- Fold indicator symbol
-	fold_indicator = "▼"
+	fold_indicator = "▼",
+	-- Auto close regions when BufEnter and BufReadPost
+	auto_close_regions = true,
 }
 
 -- Initialize with defaults immediately
@@ -210,18 +212,20 @@ local function setup_autocommands()
 			vim.wo.foldexpr = "v:lua.require'region-folding'.get_fold_level(v:lnum)"
 			vim.wo.foldtext = "v:lua.require'region-folding'.get_fold_text()"
 
-			-- Refresh folding
-			vim.cmd("silent! normal! zx")
-			
-			-- Close region folds by default if any exist
-			local ts = require('region-folding.treesitter')
-			local regions = ts.get_regions()
-			if #regions > 0 then
-				vim.schedule(function()
-					for _, region in ipairs(regions) do
-						vim.cmd(string.format("silent! %dfoldclose", region.start))
-					end
-				end)
+			if opt.auto_close_regions then
+				-- Refresh folding
+				vim.cmd("silent! normal! zx")
+
+				-- Close region folds by default if any exist
+				local ts = require("region-folding.treesitter")
+				local regions = ts.get_regions()
+				if #regions > 0 then
+					vim.schedule(function()
+						for _, region in ipairs(regions) do
+							vim.cmd(string.format("silent! %dfoldclose", region.start))
+						end
+					end)
+				end
 			end
 		end
 	})
